@@ -2,7 +2,7 @@ services:
   - type: web
     name: edunova
     runtime: python
-    buildCommand: "./build.sh"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
     startCommand: "gunicorn edunova.wsgi:application"
     envVars:
       - key: SECRET_KEY
