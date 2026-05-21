@@ -41,7 +41,7 @@ function drawBarChart(canvasId, labels, values, options = {}) {
   const colors = options.colors || Object.values(CHART_COLORS);
 
   // Grid lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.strokeStyle = 'rgba(15,23,42,0.08)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = padding.top + (chartH / 4) * i;
@@ -50,7 +50,7 @@ function drawBarChart(canvasId, labels, values, options = {}) {
     ctx.lineTo(padding.left + chartW, y);
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(160,156,184,0.6)';
+    ctx.fillStyle = '#94a3b8';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(Math.round(max - (max / 4) * i), padding.left - 6, y + 4);
@@ -74,14 +74,14 @@ function drawBarChart(canvasId, labels, values, options = {}) {
 
     // Value
     if (values[i] > 0) {
-      ctx.fillStyle = '#f1f0ff';
+      ctx.fillStyle = '#1e293b';
       ctx.font = 'bold 11px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(values[i], x + barW / 2, y - 6);
     }
 
     // Label
-    ctx.fillStyle = 'rgba(160,156,184,0.8)';
+    ctx.fillStyle = '#64748b';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label, x + barW / 2, padding.top + chartH + 18);
@@ -174,12 +174,12 @@ function drawLineChart(canvasId, labels, datasets, options = {}) {
   const range = max - min || 1;
 
   // Grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.strokeStyle = 'rgba(15,23,42,0.08)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = padding.top + (chartH / 4) * i;
     ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(padding.left + chartW, y); ctx.stroke();
-    ctx.fillStyle = 'rgba(160,156,184,0.6)';
+    ctx.fillStyle = '#94a3b8';
     ctx.font = '10px Inter, sans-serif';
     ctx.textAlign = 'right';
     const val = max - (range / 4) * i;
@@ -188,7 +188,7 @@ function drawLineChart(canvasId, labels, datasets, options = {}) {
 
   // X labels
   const stepX = chartW / (labels.length - 1 || 1);
-  ctx.fillStyle = 'rgba(160,156,184,0.8)';
+  ctx.fillStyle = '#64748b';
   ctx.font = '10px Inter, sans-serif';
   ctx.textAlign = 'center';
   labels.forEach((label, i) => {
