@@ -1,0 +1,537 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Журнал — {{ subject.title }}{% endblock %}
+{% block page_title %}Журнал{% endblock %}
+{% block page_breadcrumb %}Преподаватель / Предметы / {{ subject.title }}{% endblock %}
+{% block sidebar_nav %}{% include 'teacher/_sidebar.html' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Journal layout ── */
+.journal-wrap {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-sm);
+  overflow: hidden;
+}
+
+.journal-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-hover);
+}
+
+.journal-month-nav { display: flex; align-items: center; gap: 8px; }
+.journal-month-nav a {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--t3);
+  transition: var(--tr-fast);
+  background: #fff;
+}
+.journal-month-nav a:hover { background: var(--acc); color: #fff; border-color: var(--acc); }
+.journal-month-title { font-size: .9rem; font-weight: 700; color: var(--t1); min-width: 140px; text-align: center; }
+
+.group-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.group-tab {
+  padding: 5px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  font-size: .8rem; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  color: var(--t3); background: #fff;
+  transition: var(--tr-fast);
+}
+.group-tab:hover { border-color: var(--border-dark); color: var(--t1); }
+.group-tab.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+
+/* ── Table ── */
+.journal-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.journal-table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: .82rem;
+}
+
+.journal-table th,
+.journal-table td {
+  border: 1px solid var(--border);
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* Fixed name column */
+.col-num  { width: 38px; min-width: 38px; text-align: center; background: var(--bg-hover); }
+.col-name { width: 180px; min-width: 160px; background: var(--bg-hover); }
+.col-avg  { width: 52px; min-width: 52px; text-align: center; background: var(--bg-hover); }
+
+/* Sticky left columns */
+.journal-table .col-num,
+.journal-table .col-name {
+  position: sticky;
+  z-index: 2;
+}
+.journal-table .col-num  { left: 0; }
+.journal-table .col-name { left: 38px; box-shadow: 2px 0 6px rgba(0,0,0,.05); }
+
+.journal-table thead th {
+  font-size: .7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+  color: var(--t3);
+  background: var(--bg-hover);
+  padding: 8px 4px;
+  text-align: center;
+}
+
+.journal-table thead .col-name { text-align: left; padding-left: 12px; }
+
+/* Date header */
+.date-header { width: 46px; min-width: 46px; cursor: default; }
+.date-header.today-col { background: #f0fdf4 !important; }
+.date-num { font-size: .8rem; font-weight: 700; color: var(--t1); }
+.date-dow { font-size: .6rem; color: var(--t4); display: block; margin-top: 1px; }
+
+/* Body rows */
+.journal-table tbody tr:hover .name-cell,
+.journal-table tbody tr:hover .num-cell { background: #f8fafc; }
+
+.num-cell {
+  text-align: center; color: var(--t4);
+  font-size: .75rem; padding: 6px 4px;
+  background: var(--bg-hover);
+}
+.name-cell {
+  padding: 8px 12px 8px 12px;
+  background: var(--bg-hover);
+}
+.name-cell-name { font-weight: 600; color: var(--t1); font-size: .85rem; }
+.name-cell-group { font-size: .7rem; color: var(--t4); }
+
+/* Data cell */
+.jcell {
+  width: 46px; min-width: 46px;
+  height: 52px;
+  vertical-align: middle;
+  text-align: center;
+  cursor: pointer;
+  transition: background .15s;
+  position: relative;
+  padding: 2px;
+}
+.jcell:hover { background: #f0f9ff; }
+.jcell.today-col { background: #f0fdf4; }
+.jcell.today-col:hover { background: #dcfce7; }
+.jcell.active-cell { background: #eff6ff; outline: 2px solid #2563eb; outline-offset: -2px; }
+
+/* Grades inside cell */
+.cell-grades { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+.cell-grade {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  font-size: .75rem; font-weight: 800;
+  cursor: pointer;
+  transition: transform .15s, opacity .15s;
+}
+.cell-grade:hover { transform: scale(1.15); opacity: .75; }
+.cg-5 { background: #d1fae5; color: #065f46; }
+.cg-4 { background: #dbeafe; color: #1e40af; }
+.cg-3 { background: #fef3c7; color: #92400e; }
+.cg-2 { background: #fee2e2; color: #991b1b; }
+.cg-1 { background: #fee2e2; color: #7f1d1d; }
+
+/* Attendance dot */
+.cell-att {
+  display: inline-block;
+  font-size: .62rem; font-weight: 700;
+  padding: 1px 4px; border-radius: 3px;
+  margin-top: 2px; line-height: 1.2;
+}
+.att-present { background: #d1fae5; color: #065f46; }
+.att-absent  { background: #fee2e2; color: #991b1b; }
+.att-sick    { background: #fef3c7; color: #92400e; }
+.att-excused { background: #eff6ff; color: #1e40af; }
+.att-late    { background: #f5f3ff; color: #5b21b6; }
+
+/* Avg cell */
+.avg-cell {
+  text-align: center; font-weight: 800;
+  font-size: .85rem; padding: 0 6px;
+  background: var(--bg-hover);
+}
+
+/* ── Action panel (bottom drawer) ── */
+.jaction-panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff;
+  border-top: 2px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.1);
+  z-index: 500;
+  padding: 14px 20px;
+  transform: translateY(100%);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.jaction-panel.open { transform: translateY(0); }
+
+.jaction-who { font-size: .85rem; font-weight: 600; color: var(--t1); min-width: 140px; }
+.jaction-date { font-size: .78rem; color: var(--t3); }
+
+.jaction-section { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.jaction-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--t4); }
+
+.jadd-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 2px solid var(--border);
+  font-size: .9rem; font-weight: 800;
+  cursor: pointer; background: #fff;
+  transition: var(--tr-fast); display: flex; align-items: center; justify-content: center;
+}
+.jadd-btn:hover { transform: scale(1.1); }
+.jadd-btn[data-v="5"]:hover { background:#d1fae5; color:#065f46; border-color:#10b981; }
+.jadd-btn[data-v="4"]:hover { background:#dbeafe; color:#1e40af; border-color:#3b82f6; }
+.jadd-btn[data-v="3"]:hover { background:#fef3c7; color:#92400e; border-color:#f59e0b; }
+.jadd-btn[data-v="2"]:hover { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
+.jadd-btn[data-v="1"]:hover { background:#fee2e2; color:#7f1d1d; border-color:#dc2626; }
+
+.jatt-btn {
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: .75rem; font-weight: 700;
+  cursor: pointer; background: #fff; color: var(--t2);
+  transition: var(--tr-fast);
+}
+.jatt-btn:hover { border-color: var(--border-dark); }
+.jatt-btn.att-active-present { background:#d1fae5; color:#065f46; border-color:#10b981; }
+.jatt-btn.att-active-absent  { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
+.jatt-btn.att-active-sick    { background:#fef3c7; color:#92400e; border-color:#f59e0b; }
+.jatt-btn.att-active-excused { background:#eff6ff; color:#1e40af; border-color:#3b82f6; }
+.jatt-btn.att-active-late    { background:#f5f3ff; color:#5b21b6; border-color:#8b5cf6; }
+
+.jaction-close {
+  margin-left: auto;
+  width: 30px; height: 30px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  cursor: pointer; font-size: 1rem; color: var(--t3);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.jaction-close:hover { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+
+/* ── Legend ── */
+.legend { display: flex; gap: 10px; flex-wrap: wrap; padding: 10px 18px; border-top: 1px solid var(--border); }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: .72rem; color: var(--t3); }
+
+@media (max-width: 768px) {
+  .col-name { width: 130px; min-width: 120px; }
+  .journal-toolbar { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>{{ subject.title }}</h1>
+    <p>Электронный журнал успеваемости</p>
+  </div>
+  <a href="{% url 'teacher_subjects' %}" class="btn btn-secondary btn-sm">← Назад к предметам</a>
+</div>
+
+<div class="journal-wrap animate-in">
+
+  <!-- Toolbar: month nav + group tabs -->
+  <div class="journal-toolbar">
+    <div class="journal-month-nav">
+      <a href="?month={{ prev_month }}&year={{ prev_year }}{% if selected_group %}&group={{ selected_group.id }}{% endif %}" title="Предыдущий месяц">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </a>
+      <span class="journal-month-title">{{ month_name }} {{ year }}</span>
+      <a href="?month={{ next_month }}&year={{ next_year }}{% if selected_group %}&group={{ selected_group.id }}{% endif %}" title="Следующий месяц">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+
+    <div class="group-tabs">
+      {% for group in groups %}
+      <a href="?group={{ group.id }}&month={{ month }}&year={{ year }}"
+         class="group-tab {% if selected_group and selected_group.id == group.id %}active{% endif %}">
+        {{ group.name }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if not groups %}
+  <div class="empty-state" style="padding:40px">
+    <h3>Группы не назначены</h3>
+    <p>Обратитесь к администратору</p>
+  </div>
+  {% elif not students %}
+  <div class="empty-state" style="padding:40px">
+    <h3>В группе нет студентов</h3>
+  </div>
+  {% else %}
+
+  <!-- Journal table -->
+  <div class="journal-scroll">
+    <table class="journal-table">
+      <thead>
+        <tr>
+          <th class="col-num">№</th>
+          <th class="col-name">Студент</th>
+          {% for d in dates %}
+          <th class="date-header {% if d|date:'Y-m-d' == today %}today-col{% endif %}"
+              title="{{ d|date:'d.m.Y' }}">
+            <span class="date-num">{{ d|date:'d' }}</span>
+            <span class="date-dow">{{ d|date:'D'|slice:':2' }}</span>
+          </th>
+          {% endfor %}
+          <th class="col-avg">Ср.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td class="num-cell col-num">{{ forloop.counter }}</td>
+          <td class="col-name name-cell">
+            <div class="name-cell-name">{{ student.user.last_name }} {{ student.user.first_name }}</div>
+            {% if student.group %}<div class="name-cell-group">{{ student.group.name }}</div>{% endif %}
+          </td>
+
+          {% for d in dates %}
+          {% with ds=d|date:'Y-m-d' %}
+          <td class="jcell {% if d|date:'Y-m-d' == today %}today-col{% endif %}"
+              data-student="{{ student.id }}"
+              data-date="{{ ds }}"
+              data-name="{{ student.user.last_name }} {{ student.user.first_name }}"
+              id="cell-{{ student.id }}-{{ ds }}"
+              onclick="openPanel(this)">
+            <div class="cell-grades" id="grades-{{ student.id }}-{{ ds }}"></div>
+            <div id="att-{{ student.id }}-{{ ds }}"></div>
+          </td>
+          {% endwith %}
+          {% endfor %}
+
+          <td class="avg-cell" id="avg-{{ student.id }}">—</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><span class="cell-att att-present">П</span> Присутствовал</div>
+    <div class="legend-item"><span class="cell-att att-absent">НБ</span> Не был</div>
+    <div class="legend-item"><span class="cell-att att-sick">Б</span> Заболел</div>
+    <div class="legend-item"><span class="cell-att att-excused">О</span> Отпросился</div>
+    <div class="legend-item"><span class="cell-att att-late">Оп</span> Опоздал</div>
+    <div class="legend-item" style="margin-left:8px;color:var(--t4);font-size:.7rem">• Клик на ячейку — добавить оценку/посещаемость &nbsp;• Клик на оценку — удалить</div>
+  </div>
+
+  {% endif %}
+</div>
+
+<!-- Action panel (bottom drawer) -->
+<div class="jaction-panel" id="jaction-panel">
+  <div>
+    <div class="jaction-who" id="jpanel-name">—</div>
+    <div class="jaction-date" id="jpanel-date">—</div>
+  </div>
+
+  <div class="jaction-section">
+    <span class="jaction-label">Оценка:</span>
+    {% for v in "54321" %}
+    <button class="jadd-btn" data-v="{{ v }}" onclick="addGrade({{ v }})">{{ v }}</button>
+    {% endfor %}
+  </div>
+
+  <div class="jaction-section">
+    <span class="jaction-label">Посещ.:</span>
+    <button class="jatt-btn" data-s="present" onclick="setAtt('present')">П</button>
+    <button class="jatt-btn" data-s="absent"  onclick="setAtt('absent')">НБ</button>
+    <button class="jatt-btn" data-s="sick"    onclick="setAtt('sick')">Б</button>
+    <button class="jatt-btn" data-s="excused" onclick="setAtt('excused')">О</button>
+    <button class="jatt-btn" data-s="late"    onclick="setAtt('late')">Оп</button>
+    <button class="jatt-btn" data-s="clear"   onclick="setAtt('clear')" title="Убрать отметку" style="color:var(--t4)">✕</button>
+  </div>
+
+  <button class="jaction-close" onclick="closePanel()">✕</button>
+</div>
+
+<script>
+const CSRF      = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '{{ csrf_token }}';
+const MARK_URL  = "{% url 'teacher_group_mark' %}";
+const SUBJ_ID   = {{ subject.id }};
+const TODAY_STR = "{{ today }}";
+
+// ── Load initial data from server ────────────────────
+const journalData = {{ journal_data|safe }};
+
+const ATT_LABELS = {
+  present: 'П', absent: 'НБ', sick: 'Б', excused: 'О', late: 'Оп'
+};
+const ATT_CLASS = {
+  present: 'att-present', absent: 'att-absent',
+  sick: 'att-sick', excused: 'att-excused', late: 'att-late'
+};
+
+function renderCell(studentId, dateStr) {
+  const data  = (journalData[studentId] || {})[dateStr] || {grades:[], att:null};
+  const gWrap = document.getElementById(`grades-${studentId}-${dateStr}`);
+  const aWrap = document.getElementById(`att-${studentId}-${dateStr}`);
+  if (!gWrap) return;
+
+  gWrap.innerHTML = data.grades.map(g =>
+    `<span class="cell-grade cg-${g.value}"
+           onclick="event.stopPropagation();deleteGrade(${g.id}, ${studentId}, '${dateStr}')"
+           title="Удалить оценку ${g.value}">
+       ${g.value}
+     </span>`
+  ).join('');
+
+  if (aWrap) {
+    aWrap.innerHTML = data.att
+      ? `<span class="cell-att ${ATT_CLASS[data.att]}">${ATT_LABELS[data.att]}</span>`
+      : '';
+  }
+}
+
+function renderAvg(studentId) {
+  const allGrades = [];
+  const rows = journalData[studentId] || {};
+  Object.values(rows).forEach(cell => cell.grades.forEach(g => allGrades.push(g.value)));
+  const avg = allGrades.length
+    ? (allGrades.reduce((a,b)=>a+b,0)/allGrades.length).toFixed(1)
+    : '—';
+  const el = document.getElementById(`avg-${studentId}`);
+  if (el) el.textContent = avg;
+}
+
+// Render everything on load
+document.addEventListener('DOMContentLoaded', () => {
+  Object.keys(journalData).forEach(sid => {
+    const studentId = parseInt(sid);
+    const dates = Object.keys(journalData[sid]);
+    dates.forEach(d => renderCell(studentId, d));
+    renderAvg(studentId);
+  });
+});
+
+// ── Panel state ──────────────────────────────────────
+let panelStudent = null;
+let panelDate    = null;
+
+function openPanel(cell) {
+  panelStudent = parseInt(cell.dataset.student);
+  panelDate    = cell.dataset.date;
+
+  document.querySelectorAll('.jcell.active-cell').forEach(c=>c.classList.remove('active-cell'));
+  cell.classList.add('active-cell');
+
+  document.getElementById('jpanel-name').textContent = cell.dataset.name;
+  document.getElementById('jpanel-date').textContent = formatDate(panelDate);
+
+  // Highlight active att button
+  const curAtt = ((journalData[panelStudent]||{})[panelDate]||{}).att;
+  document.querySelectorAll('.jatt-btn').forEach(b => {
+    b.className = 'jatt-btn';
+    if (b.dataset.s === curAtt) b.classList.add(`att-active-${curAtt}`);
+  });
+
+  document.getElementById('jaction-panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('jaction-panel').classList.remove('open');
+  document.querySelectorAll('.jcell.active-cell').forEach(c=>c.classList.remove('active-cell'));
+  panelStudent = null; panelDate = null;
+}
+
+function formatDate(d) {
+  const [y,m,day] = d.split('-');
+  return `${day}.${m}.${y}`;
+}
+
+// ── Add grade ────────────────────────────────────────
+async function addGrade(value) {
+  if (!panelStudent || !panelDate) return;
+  const resp = await fetch(MARK_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({action:'grade', student_id:panelStudent, subject_id:SUBJ_ID, value, date:panelDate})
+  });
+  const data = await resp.json();
+  if (data.success) {
+    if (!journalData[panelStudent]) journalData[panelStudent] = {};
+    if (!journalData[panelStudent][panelDate]) journalData[panelStudent][panelDate] = {grades:[],att:null};
+    journalData[panelStudent][panelDate].grades.push({id:data.grade_id, value});
+    renderCell(panelStudent, panelDate);
+    renderAvg(panelStudent);
+    showToast(`Оценка ${value} выставлена`, 'success');
+  } else {
+    showToast(data.error||'Ошибка', 'error');
+  }
+}
+
+// ── Delete grade ─────────────────────────────────────
+async function deleteGrade(gradeId, studentId, dateStr) {
+  if (!confirm('Удалить эту оценку?')) return;
+  const resp = await fetch(MARK_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({action:'del_grade', grade_id:gradeId})
+  });
+  const data = await resp.json();
+  if (data.success) {
+    const cell = journalData[studentId]?.[dateStr];
+    if (cell) cell.grades = cell.grades.filter(g=>g.id!==gradeId);
+    renderCell(studentId, dateStr);
+    renderAvg(studentId);
+    showToast('Оценка удалена', 'info');
+  } else {
+    showToast('Ошибка удаления', 'error');
+  }
+}
+
+// ── Set attendance ───────────────────────────────────
+async function setAtt(status) {
+  if (!panelStudent || !panelDate) return;
+  const resp = await fetch(MARK_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({action:'attendance', student_id:panelStudent, subject_id:SUBJ_ID, date:panelDate, status})
+  });
+  const data = await resp.json();
+  if (data.success) {
+    if (!journalData[panelStudent]) journalData[panelStudent] = {};
+    if (!journalData[panelStudent][panelDate]) journalData[panelStudent][panelDate] = {grades:[],att:null};
+    journalData[panelStudent][panelDate].att = data.status;
+    renderCell(panelStudent, panelDate);
+
+    // Update panel att buttons
+    const curAtt = data.status;
+    document.querySelectorAll('.jatt-btn').forEach(b => {
+      b.className = 'jatt-btn';
+      if (curAtt && b.dataset.s === curAtt) b.classList.add(`att-active-${curAtt}`);
+    });
+
+    const labels = {present:'Присутствовал',absent:'Не был',sick:'Заболел',excused:'Отпросился',late:'Опоздал',clear:'Убрано'};
+    showToast(labels[status]||status, 'success');
+  } else {
+    showToast('Ошибка', 'error');
+  }
+}
+
+// Close panel on Escape
+document.addEventListener('keydown', e => { if (e.key==='Escape') closePanel(); });
+</script>
+{% endblock %}

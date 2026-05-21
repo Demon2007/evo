@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from functools import wraps
 import json
+import calendar
+import datetime
 
 from accounts.models import User
 from .models import (
@@ -590,7 +592,7 @@ def teacher_group_mark(request):
         return JsonResponse({'error': 'POST required'}, status=405)
     teacher = get_teacher_profile(request.user)
     data = json.loads(request.body)
-    action = data.get('action')  # 'grade' | 'attendance'
+    action = data.get('action')
 
     if action == 'grade':
         student = get_object_or_404(StudentProfile, id=data['student_id'])
@@ -607,20 +609,129 @@ def teacher_group_mark(request):
             message=f'По предмету «{subject.title}» выставлена оценка {value}.',
             type='grade'
         )
-        return JsonResponse({'success': True, 'grade_id': grade.id, 'value': value})
+        avg = Grade.objects.filter(student=student, subject=subject).aggregate(a=Avg('value'))['a'] or 0
+        return JsonResponse({'success': True, 'grade_id': grade.id, 'value': value, 'avg': round(avg, 1)})
+
+    elif action == 'del_grade':
+        grade = get_object_or_404(Grade, id=data['grade_id'])
+        student = grade.student
+        subject = grade.subject
+        grade.delete()
+        avg = Grade.objects.filter(student=student, subject=subject).aggregate(a=Avg('value'))['a'] or 0
+        return JsonResponse({'success': True, 'avg': round(avg, 1)})
 
     elif action == 'attendance':
         student = get_object_or_404(StudentProfile, id=data['student_id'])
         subject = get_object_or_404(Subject, id=data['subject_id'], teacher=teacher)
         att_date = data.get('date', str(timezone.now().date()))
         status = data.get('status', 'present')
-        att, created = Attendance.objects.update_or_create(
+        if status == 'clear':
+            Attendance.objects.filter(student=student, subject=subject, date=att_date).delete()
+            return JsonResponse({'success': True, 'status': None})
+        att, _ = Attendance.objects.update_or_create(
             student=student, subject=subject, date=att_date,
             defaults={'status': status}
         )
         return JsonResponse({'success': True, 'status': status})
 
     return JsonResponse({'error': 'Unknown action'}, status=400)
+
+
+@role_required('teacher')
+def teacher_subject_journal(request, subject_id):
+    teacher = get_teacher_profile(request.user)
+    subject = get_object_or_404(Subject, id=subject_id, teacher=teacher)
+    groups = subject.groups.all().order_by('course', 'name')
+
+    today = timezone.now().date()
+    month = int(request.GET.get('month', today.month))
+    year  = int(request.GET.get('year',  today.year))
+
+    # Clamp to valid month
+    if month < 1:  month = 12; year -= 1
+    if month > 12: month = 1;  year += 1
+
+    _, last_day = calendar.monthrange(year, month)
+    month_start = datetime.date(year, month, 1)
+    month_end   = datetime.date(year, month, last_day)
+    dates = [datetime.date(year, month, d) for d in range(1, last_day + 1)
+             if datetime.date(year, month, d) <= today]
+
+    # Selected group
+    group_id = request.GET.get('group', '')
+    selected_group = None
+    if group_id:
+        selected_group = groups.filter(id=group_id).first()
+    if not selected_group and groups.exists():
+        selected_group = groups.first()
+
+    students = []
+    journal_data = {}
+
+    if selected_group:
+        students = list(StudentProfile.objects.filter(
+            group=selected_group
+        ).select_related('user').order_by('user__last_name', 'user__first_name'))
+
+        grades = Grade.objects.filter(
+            subject=subject,
+            student__group=selected_group,
+            date__gte=month_start,
+            date__lte=month_end,
+        ).order_by('date', 'id').select_related('student')
+
+        att_records = Attendance.objects.filter(
+            subject=subject,
+            student__group=selected_group,
+            date__gte=month_start,
+            date__lte=month_end,
+        ).select_related('student')
+
+        for st in students:
+            journal_data[st.id] = {}
+
+        for g in grades:
+            d = str(g.date)
+            sid = g.student_id
+            if sid not in journal_data:
+                journal_data[sid] = {}
+            if d not in journal_data[sid]:
+                journal_data[sid][d] = {'grades': [], 'att': None}
+            journal_data[sid][d]['grades'].append({'id': g.id, 'value': g.value})
+
+        for a in att_records:
+            d = str(a.date)
+            sid = a.student_id
+            if sid not in journal_data:
+                journal_data[sid] = {}
+            if d not in journal_data[sid]:
+                journal_data[sid][d] = {'grades': [], 'att': None}
+            journal_data[sid][d]['att'] = a.status
+
+    # Prev / next month
+    prev_month = month - 1 if month > 1 else 12
+    prev_year  = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year  = year if month < 12 else year + 1
+
+    month_names = ['','Январь','Февраль','Март','Апрель','Май','Июнь',
+                   'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
+
+    return render(request, 'teacher/journal.html', {
+        'teacher': teacher,
+        'subject': subject,
+        'groups': groups,
+        'selected_group': selected_group,
+        'dates': dates,
+        'students': students,
+        'journal_data': json.dumps(journal_data),
+        'today': str(today),
+        'month': month,
+        'year': year,
+        'month_name': month_names[month],
+        'prev_month': prev_month, 'prev_year': prev_year,
+        'next_month': next_month, 'next_year': next_year,
+    })
 
 
 # ─── Student views ────────────────────────────────────────────────────────────

@@ -86,11 +86,12 @@ class Subject(models.Model):
 
 
 class Grade(models.Model):
+    import datetime as _dt
     GRADE_CHOICES = [(i, str(i)) for i in range(1, 6)]
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='grades')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='grades')
     value = models.PositiveIntegerField(choices=GRADE_CHOICES, verbose_name='Оценка')
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=_dt.date.today)
     comment = models.CharField(max_length=300, blank=True)
     teacher = models.ForeignKey(
         TeacherProfile, on_delete=models.SET_NULL, null=True, blank=True,
@@ -113,9 +114,10 @@ class Grade(models.Model):
 class Attendance(models.Model):
     STATUS_CHOICES = [
         ('present', 'Присутствовал'),
-        ('absent', 'Отсутствовал'),
-        ('late', 'Опоздал'),
-        ('excused', 'По уважительной причине'),
+        ('absent',  'Не был (НБ)'),
+        ('sick',    'Заболел (Б)'),
+        ('excused', 'Отпросился (О)'),
+        ('late',    'Опоздал (Оп)'),
     ]
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='attendance')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='attendance')

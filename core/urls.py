@@ -41,6 +41,7 @@ urlpatterns = [
     path('teacher/schedule/', views.teacher_schedule, name='teacher_schedule'),
     path('teacher/groups/', views.teacher_groups, name='teacher_groups'),
     path('teacher/groups/mark/', views.teacher_group_mark, name='teacher_group_mark'),
+    path('teacher/subjects/<int:subject_id>/journal/', views.teacher_subject_journal, name='teacher_subject_journal'),
 
     # Student
     path('student/', views.student_dashboard, name='student_dashboard'),

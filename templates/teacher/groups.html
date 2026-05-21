@@ -7,209 +7,119 @@
 
 {% block extra_css %}
 <style>
-/* ── Groups page extras ── */
 .groups-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .group-card-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  text-decoration: none;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-  text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 18px 14px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  cursor: pointer; text-decoration: none;
+  transition: var(--tr); text-align: center;
 }
-
-.group-card-btn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--purple-600), var(--neon-purple));
-  opacity: 0;
-  transition: var(--transition);
-}
-
-.group-card-btn:hover,
-.group-card-btn.active {
-  border-color: rgba(139, 92, 246, 0.4);
-  background: rgba(139, 92, 246, 0.08);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
-  transform: translateY(-2px);
-}
-
-.group-card-btn.active { border-color: var(--purple-500); }
-.group-card-btn.active::before,
-.group-card-btn:hover::before { opacity: 1; }
-
+.group-card-btn:hover  { border-color: var(--border-dark); box-shadow: var(--sh-sm); transform: translateY(-2px); }
+.group-card-btn.active { border-color: var(--acc); background: var(--acc-light); }
 .group-card-icon {
-  width: 48px; height: 48px;
-  background: rgba(139, 92, 246, 0.12);
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--purple-400);
+  width: 44px; height: 44px; background: var(--acc-light);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  color: var(--acc);
 }
+.group-card-name { font-size: .95rem; font-weight: 700; color: var(--t1); }
+.group-card-meta { font-size: .72rem; color: var(--t4); }
 
-.group-card-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.group-card-meta {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-/* ── Student rows in the panel ── */
 .student-row {
   display: grid;
-  grid-template-columns: 48px 1fr auto auto;
+  grid-template-columns: 40px 1fr auto;
   align-items: center;
-  gap: 14px;
-  padding: 14px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  transition: background 0.15s;
+  gap: 14px; padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background .1s;
 }
-
 .student-row:last-child { border-bottom: none; }
-.student-row:hover { background: rgba(139,92,246,0.04); }
+.student-row:hover { background: var(--bg-hover); }
 
-.student-row-name { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
-.student-row-sub  { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+.student-row-name { font-size: .88rem; font-weight: 600; color: var(--t1); }
+.student-row-sub  { font-size: .72rem; color: var(--t4); margin-top: 2px; }
 
-/* ── Grade buttons (1–5) ── */
-.grade-btns { display: flex; gap: 5px; }
+.student-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
+/* Grade buttons */
+.grade-btns { display: flex; gap: 4px; }
 .grade-btn {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: var(--transition-fast);
+  width: 30px; height: 30px; border-radius: 7px;
+  border: 1px solid var(--border);
+  background: #fff; color: var(--t3);
+  font-size: .82rem; font-weight: 700;
+  cursor: pointer; transition: var(--tr-fast);
   display: flex; align-items: center; justify-content: center;
 }
+.grade-btn:hover,
+.grade-btn.flash { transform: scale(1.15); }
+.grade-btn[data-v="5"]:hover { background:#d1fae5; color:#065f46; border-color:#10b981; }
+.grade-btn[data-v="4"]:hover { background:#dbeafe; color:#1e40af; border-color:#3b82f6; }
+.grade-btn[data-v="3"]:hover { background:#fef3c7; color:#92400e; border-color:#f59e0b; }
+.grade-btn[data-v="2"]:hover { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
+.grade-btn[data-v="1"]:hover { background:#fee2e2; color:#7f1d1d; border-color:#dc2626; }
 
-.grade-btn:hover { transform: scale(1.1); }
-.grade-btn[data-v="5"]:hover { background: rgba(16,185,129,0.25); color: #34d399; border-color: #10b981; }
-.grade-btn[data-v="4"]:hover { background: rgba(59,130,246,0.25); color: #60a5fa; border-color: #3b82f6; }
-.grade-btn[data-v="3"]:hover { background: rgba(245,158,11,0.25); color: #fbbf24; border-color: #f59e0b; }
-.grade-btn[data-v="2"]:hover { background: rgba(239,68,68,0.25);  color: #f87171; border-color: #ef4444; }
-.grade-btn[data-v="1"]:hover { background: rgba(239,68,68,0.35);  color: #ef4444; border-color: #dc2626; }
+/* Recent grades list */
+.given-grades { display: flex; gap: 3px; flex-wrap: wrap; }
+.given-grade {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 5px;
+  font-size: .72rem; font-weight: 800;
+  cursor: pointer; transition: opacity .15s, transform .15s;
+}
+.given-grade:hover { opacity: .7; transform: scale(1.1); }
+.gg-5 { background:#d1fae5; color:#065f46; }
+.gg-4 { background:#dbeafe; color:#1e40af; }
+.gg-3 { background:#fef3c7; color:#92400e; }
+.gg-2 { background:#fee2e2; color:#991b1b; }
+.gg-1 { background:#fee2e2; color:#7f1d1d; }
 
-.grade-btn.given-5 { background: rgba(16,185,129,0.2); color: #34d399; border-color: #10b981; }
-.grade-btn.given-4 { background: rgba(59,130,246,0.2); color: #60a5fa; border-color: #3b82f6; }
-.grade-btn.given-3 { background: rgba(245,158,11,0.2); color: #fbbf24; border-color: #f59e0b; }
-.grade-btn.given-2 { background: rgba(239,68,68,0.2);  color: #f87171; border-color: #ef4444; }
-.grade-btn.given-1 { background: rgba(239,68,68,0.3);  color: #ef4444; border-color: #dc2626; }
-
-/* ── Attendance quick-select ── */
-.att-btns { display: flex; gap: 4px; }
-
+/* Attendance buttons */
+.att-btns { display: flex; gap: 4px; flex-wrap: wrap; }
 .att-btn {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04);
-  font-size: 0.7rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-fast);
-  color: var(--text-muted);
+  padding: 4px 8px; border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff; font-size: .7rem; font-weight: 600;
+  cursor: pointer; transition: var(--tr-fast); color: var(--t3);
   white-space: nowrap;
 }
+.att-btn:hover { border-color: var(--border-dark); color: var(--t1); }
+.att-btn.att-active-present { background:#d1fae5; color:#065f46; border-color:#10b981; }
+.att-btn.att-active-absent  { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
+.att-btn.att-active-sick    { background:#fef3c7; color:#92400e; border-color:#f59e0b; }
+.att-btn.att-active-excused { background:#eff6ff; color:#1e40af; border-color:#3b82f6; }
+.att-btn.att-active-late    { background:#f5f3ff; color:#5b21b6; border-color:#8b5cf6; }
 
-.att-btn:hover { opacity: 0.9; transform: scale(1.05); }
-.att-btn[data-s="present"] { }
-.att-btn[data-s="present"]:hover,
-.att-btn[data-s="present"].active { background: rgba(16,185,129,0.2); color: #34d399; border-color: #10b981; }
-.att-btn[data-s="absent"]:hover,
-.att-btn[data-s="absent"].active  { background: rgba(239,68,68,0.2);  color: #f87171; border-color: #ef4444; }
-.att-btn[data-s="late"]:hover,
-.att-btn[data-s="late"].active    { background: rgba(245,158,11,0.2); color: #fbbf24; border-color: #f59e0b; }
-.att-btn[data-s="excused"]:hover,
-.att-btn[data-s="excused"].active { background: rgba(59,130,246,0.2);  color: #60a5fa; border-color: #3b82f6; }
-
-/* ── Subject tabs ── */
-.subj-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-
+/* Subj tabs */
+.subj-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .subj-tab {
-  padding: 7px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-fast);
+  padding: 6px 14px; border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: #fff; color: var(--t3);
+  font-size: .8rem; font-weight: 600;
+  cursor: pointer; transition: var(--tr-fast);
 }
+.subj-tab:hover { border-color: var(--border-dark); color: var(--t1); }
+.subj-tab.active { background: var(--acc); color: #fff; border-color: var(--acc); }
 
-.subj-tab:hover { border-color: var(--glass-border-hover); color: var(--text-primary); }
-.subj-tab.active { background: rgba(139,92,246,0.15); color: var(--purple-400); border-color: var(--purple-500); }
-
-/* ── Date picker bar ── */
-.mark-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--glass-border);
-  background: rgba(139,92,246,0.04);
-  flex-wrap: wrap;
+/* Mode bar */
+.mode-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px; border-bottom: 1px solid var(--border);
+  background: var(--bg-hover); flex-wrap: wrap;
 }
+.mode-bar label { font-size: .75rem; font-weight: 600; color: var(--t4); }
 
-.mark-bar label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
-
-.mark-bar input[type="date"] {
-  padding: 6px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-family: inherit;
-  outline: none;
-  cursor: pointer;
-}
-
-.mark-bar input[type="date"]:focus {
-  border-color: var(--purple-500);
-  box-shadow: 0 0 0 2px rgba(139,92,246,0.2);
-}
-
-/* ── Grade flash animation ── */
-@keyframes gradeFlash {
-  0%   { transform: scale(1.4); }
-  100% { transform: scale(1); }
-}
-.grade-flash { animation: gradeFlash 0.35s cubic-bezier(0.34,1.56,0.64,1); }
-
-/* ── Avg badge ── */
-.avg-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
+@media (max-width: 600px) {
+  .student-row { grid-template-columns: 36px 1fr; }
+  .student-actions { grid-column: 1/-1; padding-left: 50px; }
 }
 </style>
 {% endblock %}
@@ -218,7 +128,7 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Мои группы</h1>
-    <p>Выберите группу для выставления оценок и отметки посещаемости</p>
+    <p>Выберите группу для быстрой отметки оценок и посещаемости</p>
   </div>
 </div>
 
@@ -228,240 +138,220 @@
   <a href="?group={{ group.id }}"
      class="group-card-btn {% if selected_group and selected_group.id == group.id %}active{% endif %}">
     <div class="group-card-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
     </div>
     <div class="group-card-name">{{ group.name }}</div>
     <div class="group-card-meta">{{ group.course }} курс · {{ group.studentprofile_set.count }} студ.</div>
   </a>
   {% empty %}
-  <div style="grid-column:1/-1">
-    <div class="card">
-      <div class="empty-state"><h3>Группы не назначены</h3><p>Обратитесь к администратору</p></div>
-    </div>
+  <div style="grid-column:1/-1" class="card">
+    <div class="empty-state"><h3>Группы не назначены</h3><p>Обратитесь к администратору</p></div>
   </div>
   {% endfor %}
 </div>
 
 {% if selected_group %}
-<!-- Main panel -->
 <div class="card animate-in" id="group-panel">
 
-  <!-- Subject tabs -->
-  <div style="padding:18px 20px 0; border-bottom: 1px solid var(--glass-border)">
-    <div class="flex justify-between items-center" style="margin-bottom:14px">
+  <!-- Header + subject tabs -->
+  <div style="padding:16px 18px;border-bottom:1px solid var(--border)">
+    <div class="flex justify-between items-center" style="margin-bottom:12px">
       <h3 class="card-title">{{ selected_group.name }} — {{ students|length }} студентов</h3>
-      <span class="pill pill-purple">{{ selected_group.course }} курс</span>
+      <span class="pill pill-gray">{{ selected_group.course }} курс</span>
     </div>
     {% if subjects_for_group %}
     <div class="subj-tabs" id="subj-tabs">
       {% for subj in subjects_for_group %}
       <button class="subj-tab {% if forloop.first %}active{% endif %}"
-              data-subj-id="{{ subj.id }}"
-              data-subj-name="{{ subj.title }}">
+              data-subj-id="{{ subj.id }}" data-subj-name="{{ subj.title }}">
         {{ subj.title }}
       </button>
       {% endfor %}
     </div>
     {% else %}
-    <p class="text-muted text-sm" style="margin-bottom:12px">Предметы не назначены для этой группы</p>
+    <p class="text-muted text-sm" style="margin-bottom:8px">Предметы не назначены</p>
     {% endif %}
   </div>
 
-  <!-- Mode switch + date -->
-  <div class="mark-bar">
+  <!-- Mode bar -->
+  <div class="mode-bar">
     <div class="flex gap-2">
-      <button class="att-btn active" id="mode-grade" onclick="setMode('grade')">
-        📊 Оценки
-      </button>
-      <button class="att-btn" id="mode-att" onclick="setMode('attendance')">
-        ✅ Посещаемость
-      </button>
+      <button class="att-btn att-active-present" id="mode-grade" onclick="setMode('grade')">📊 Оценки</button>
+      <button class="att-btn" id="mode-att" onclick="setMode('attendance')">✓ Посещаемость</button>
     </div>
-    <div class="flex items-center gap-2" id="date-wrap">
+    <div id="date-wrap" class="flex items-center gap-2" style="display:none!important">
       <label>Дата:</label>
-      <input type="date" id="att-date" value="{{ today }}">
+      <input type="date" id="att-date" class="form-input" style="width:auto;padding:5px 10px" value="{{ today }}">
     </div>
     <span id="subj-label" class="text-xs text-muted"></span>
   </div>
 
-  <!-- Student list -->
+  <!-- Student rows -->
   {% if students %}
   <div id="students-list">
     {% for student in students %}
     <div class="student-row" data-student-id="{{ student.id }}">
-      <!-- Avatar -->
-      <div class="avatar avatar-md">{{ student.user.get_initials }}</div>
 
-      <!-- Name + avg -->
+      <div class="avatar avatar-sm">{{ student.user.get_initials }}</div>
+
       <div>
         <div class="student-row-name">{{ student.user.get_full_name_or_username }}</div>
-        <div class="student-row-sub">
-          Ср. балл:
-          <span class="avg-badge grade-{{ student.average_grade|floatformat:0 }}"
-                id="avg-{{ student.id }}">
-            {{ student.average_grade }}
-          </span>
+        <div class="student-row-sub flex gap-2 items-center">
+          Ср: <span id="avg-{{ student.id }}" style="font-weight:700;color:var(--t1)">{{ student.average_grade }}</span>
+          &nbsp;
+          <span id="given-{{ student.id }}" class="given-grades"></span>
         </div>
       </div>
 
-      <!-- Grade buttons (grade mode) -->
-      <div class="grade-btns mode-grade" id="grade-btns-{{ student.id }}">
-        {% for v in "54321" %}
-        <button class="grade-btn" data-v="{{ v }}"
-                onclick="markGrade({{ student.id }}, {{ v }}, this)">
-          {{ v }}
-        </button>
-        {% endfor %}
+      <div class="student-actions">
+        <!-- Grade buttons (grade mode) -->
+        <div class="grade-btns mode-grade" id="grade-btns-{{ student.id }}">
+          {% for v in "54321" %}
+          <button class="grade-btn" data-v="{{ v }}"
+                  onclick="markGrade({{ student.id }}, {{ v }}, this)">{{ v }}</button>
+          {% endfor %}
+        </div>
+
+        <!-- Attendance buttons (attendance mode) -->
+        <div class="att-btns mode-att" id="att-btns-{{ student.id }}" style="display:none">
+          <button class="att-btn" data-s="present" onclick="markAtt({{ student.id }}, 'present', this)">П</button>
+          <button class="att-btn" data-s="absent"  onclick="markAtt({{ student.id }}, 'absent',  this)">НБ</button>
+          <button class="att-btn" data-s="sick"    onclick="markAtt({{ student.id }}, 'sick',    this)">Б</button>
+          <button class="att-btn" data-s="excused" onclick="markAtt({{ student.id }}, 'excused', this)">О</button>
+          <button class="att-btn" data-s="late"    onclick="markAtt({{ student.id }}, 'late',    this)">Оп</button>
+        </div>
       </div>
 
-      <!-- Attendance buttons (attendance mode) -->
-      <div class="att-btns mode-att" id="att-btns-{{ student.id }}" style="display:none">
-        <button class="att-btn active" data-s="present"
-                onclick="markAtt({{ student.id }}, 'present', this)">Пришёл</button>
-        <button class="att-btn" data-s="absent"
-                onclick="markAtt({{ student.id }}, 'absent', this)">Нет</button>
-        <button class="att-btn" data-s="late"
-                onclick="markAtt({{ student.id }}, 'late', this)">Опоздал</button>
-        <button class="att-btn" data-s="excused"
-                onclick="markAtt({{ student.id }}, 'excused', this)">Уваж.</button>
-      </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-state"><h3>В этой группе нет студентов</h3></div>
+  <div class="empty-state" style="padding:32px"><h3>В группе нет студентов</h3></div>
   {% endif %}
 
 </div>
 {% endif %}
 
 <script>
-const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '{{ csrf_token }}';
+const CSRF     = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '{{ csrf_token }}';
 const MARK_URL = "{% url 'teacher_group_mark' %}";
-
-// Current state
 let currentSubjId = null;
-let currentMode = 'grade';
+let currentMode   = 'grade';
 
-// Init subject tabs
+// Grade storage per student: { studentId: [{id, value}, ...] }
+const givenGrades = {};
+
 document.addEventListener('DOMContentLoaded', () => {
   const firstTab = document.querySelector('.subj-tab');
   if (firstTab) {
     currentSubjId = firstTab.dataset.subjId;
-    document.getElementById('subj-label').textContent = 'Предмет: ' + firstTab.dataset.subjName;
+    document.getElementById('subj-label').textContent = firstTab.dataset.subjName;
   }
-
   document.querySelectorAll('.subj-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.subj-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentSubjId = tab.dataset.subjId;
-      document.getElementById('subj-label').textContent = 'Предмет: ' + tab.dataset.subjName;
+      document.getElementById('subj-label').textContent = tab.dataset.subjName;
     });
   });
+  setMode('grade');
 });
 
-// Mode switch (grade | attendance)
 function setMode(mode) {
   currentMode = mode;
-  document.getElementById('mode-grade').classList.toggle('active', mode === 'grade');
-  document.getElementById('mode-att').classList.toggle('active', mode === 'attendance');
+  document.getElementById('mode-grade').className =
+    'att-btn' + (mode === 'grade' ? ' att-active-present' : '');
+  document.getElementById('mode-att').className =
+    'att-btn' + (mode === 'attendance' ? ' att-active-present' : '');
   document.getElementById('date-wrap').style.display = mode === 'attendance' ? 'flex' : 'none';
-
-  document.querySelectorAll('.mode-grade').forEach(el => el.style.display = mode === 'grade' ? 'flex' : 'none');
-  document.querySelectorAll('.mode-att').forEach(el => el.style.display = mode === 'attendance' ? 'flex' : 'none');
+  document.querySelectorAll('.mode-grade').forEach(el =>
+    el.style.display = mode === 'grade' ? 'flex' : 'none');
+  document.querySelectorAll('.mode-att').forEach(el =>
+    el.style.display = mode === 'attendance' ? 'flex' : 'none');
 }
-// Init date display hidden for grade mode
-setMode('grade');
 
-// Grade action
+function renderGivenGrades(studentId) {
+  const el = document.getElementById(`given-${studentId}`);
+  if (!el) return;
+  const grades = givenGrades[studentId] || [];
+  el.innerHTML = grades.map(g =>
+    `<span class="given-grade gg-${g.value}"
+           onclick="removeGrade(${g.id}, ${studentId}, this)"
+           title="Удалить оценку ${g.value}">${g.value}</span>`
+  ).join('');
+}
+
 async function markGrade(studentId, value, btn) {
   if (!currentSubjId) { showToast('Выберите предмет', 'warning'); return; }
-
+  btn.classList.add('flash');
   const resp = await fetch(MARK_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': CSRF
-    },
-    body: JSON.stringify({
-      action: 'grade',
-      student_id: studentId,
-      subject_id: currentSubjId,
-      value: value
-    })
+    headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({action:'grade', student_id:studentId, subject_id:currentSubjId, value})
   });
+  btn.classList.remove('flash');
   const data = await resp.json();
   if (data.success) {
-    // Visual feedback on button
-    const gradeClass = `given-${value}`;
-    btn.classList.add(gradeClass, 'grade-flash');
-    setTimeout(() => btn.classList.remove('grade-flash'), 400);
-
-    // Refresh avg badge
-    refreshAvg(studentId);
-
+    if (!givenGrades[studentId]) givenGrades[studentId] = [];
+    givenGrades[studentId].push({id: data.grade_id, value});
+    renderGivenGrades(studentId);
+    const avgEl = document.getElementById(`avg-${studentId}`);
+    if (avgEl) avgEl.textContent = data.avg;
     showToast(`Оценка ${value} выставлена`, 'success');
   } else {
     showToast(data.error || 'Ошибка', 'error');
   }
 }
 
-// Attendance action
-async function markAtt(studentId, status, btn) {
-  if (!currentSubjId) { showToast('Выберите предмет', 'warning'); return; }
-  const date = document.getElementById('att-date').value;
-
+async function removeGrade(gradeId, studentId, el) {
+  if (!confirm('Удалить оценку?')) return;
   const resp = await fetch(MARK_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': CSRF
-    },
-    body: JSON.stringify({
-      action: 'attendance',
-      student_id: studentId,
-      subject_id: currentSubjId,
-      date: date,
-      status: status
-    })
+    headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({action:'del_grade', grade_id:gradeId})
   });
   const data = await resp.json();
   if (data.success) {
-    // Highlight active att button
+    if (givenGrades[studentId])
+      givenGrades[studentId] = givenGrades[studentId].filter(g => g.id !== gradeId);
+    renderGivenGrades(studentId);
+    const avgEl = document.getElementById(`avg-${studentId}`);
+    if (avgEl) avgEl.textContent = data.avg;
+    showToast('Оценка удалена', 'info');
+  }
+}
+
+async function markAtt(studentId, status, btn) {
+  if (!currentSubjId) { showToast('Выберите предмет', 'warning'); return; }
+  const date = document.getElementById('att-date').value;
+  const resp = await fetch(MARK_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({action:'attendance', student_id:studentId, subject_id:currentSubjId, date, status})
+  });
+  const data = await resp.json();
+  if (data.success) {
     const parent = document.getElementById(`att-btns-${studentId}`);
-    parent.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const labels = {present:'Пришёл ✓', absent:'Нет ✗', late:'Опоздал ⏰', excused:'Уваж. 📋'};
-    showToast(`${labels[status] || status}`, 'success');
+    parent.querySelectorAll('.att-btn').forEach(b => {
+      b.className = 'att-btn';
+      if (b.dataset.s === status) b.classList.add(`att-active-${status}`);
+    });
+    const labels = {present:'П — Присутствует',absent:'НБ — Не был',sick:'Б — Заболел',excused:'О — Отпросился',late:'Оп — Опоздал'};
+    showToast(labels[status] || status, 'success');
   } else {
-    showToast(data.error || 'Ошибка', 'error');
+    showToast('Ошибка', 'error');
   }
 }
 
-// Refresh avg badge after grading
-async function refreshAvg(studentId) {
-  // Simple client-side fetch of updated avg via a lightweight call
-  // We don't have a dedicated endpoint, so just reload the badge after a moment
-  // (The real avg will show on page refresh)
-  const badge = document.getElementById(`avg-${studentId}`);
-  if (badge) {
-    badge.style.opacity = '0.4';
-    setTimeout(() => { badge.style.opacity = '1'; }, 600);
-  }
-}
-
-// Set today as default date
+// Set today's date
 document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date().toISOString().split('T')[0];
-  const datePicker = document.getElementById('att-date');
-  if (datePicker && !datePicker.value) datePicker.value = today;
+  const dp = document.getElementById('att-date');
+  if (dp && !dp.value) dp.value = new Date().toISOString().split('T')[0];
 });
 </script>
 {% endblock %}
