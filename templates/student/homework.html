@@ -1,0 +1,56 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Домашние задания{% endblock %}
+{% block page_title %}Домашние задания{% endblock %}
+{% block page_breadcrumb %}Студент / Задания{% endblock %}
+{% block sidebar_nav %}{% include 'student/_sidebar.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Домашние задания</h1><p>Задания по предметам</p></div>
+</div>
+
+<div class="filters-bar">
+  <form method="get" style="display:contents">
+    <select name="subject" class="form-input" style="width:auto;min-width:160px" onchange="this.form.submit()">
+      <option value="">Все предметы</option>
+      {% for s in subjects %}<option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>{{ s.title }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+{% if homework %}
+<div style="display:flex;flex-direction:column;gap:12px">
+  {% for hw in homework %}
+  <div class="card animate-in {% if hw.is_overdue %}{% endif %}" style="border-color:{% if hw.is_overdue %}rgba(239,68,68,0.25){% else %}var(--glass-border){% endif %}">
+    <div class="card-body" style="display:flex;align-items:flex-start;gap:16px">
+      <div class="notif-icon homework" style="margin-top:4px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div style="flex:1">
+        <div class="flex justify-between items-center" style="margin-bottom:6px;flex-wrap:wrap;gap:8px">
+          <h3 style="font-size:1rem">{{ hw.title }}</h3>
+          <div class="flex gap-2">
+            <span class="pill pill-purple">{{ hw.subject.title }}</span>
+            {% if hw.is_overdue %}
+              <span class="pill pill-red">Просрочено</span>
+            {% else %}
+              <span class="pill pill-green">Активно</span>
+            {% endif %}
+          </div>
+        </div>
+        <p style="font-size:0.875rem;margin-bottom:8px">{{ hw.description }}</p>
+        <div class="text-xs text-muted">
+          Срок сдачи: <strong style="color:{% if hw.is_overdue %}var(--danger){% else %}var(--text-primary){% endif %}">{{ hw.deadline|date:"d.m.Y H:i" }}</strong>
+          &nbsp;·&nbsp; Добавлено: {{ hw.created_at|date:"d.m.Y" }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state"><h3>Заданий нет</h3><p>Домашние задания появятся здесь после их публикации преподавателем</p></div>
+</div>
+{% endif %}
+{% endblock %}

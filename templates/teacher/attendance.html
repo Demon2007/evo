@@ -1,0 +1,81 @@
+{% extends 'base_dashboard.html' %}
+{% load core_extras %}
+{% block title %}Посещаемость{% endblock %}
+{% block page_title %}Посещаемость{% endblock %}
+{% block page_breadcrumb %}Преподаватель / Посещаемость{% endblock %}
+{% block sidebar_nav %}{% include 'teacher/_sidebar.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Учёт посещаемости</h1><p>Отмечайте присутствие студентов</p></div>
+</div>
+
+<div class="filters-bar">
+  <form method="get" style="display:contents">
+    <select name="subject" class="form-input" style="width:auto;min-width:160px" onchange="this.form.submit()">
+      <option value="">— Выберите предмет —</option>
+      {% for s in subjects %}<option value="{{ s.id }}" {% if selected_subject and selected_subject.id == s.id %}selected{% endif %}>{{ s.title }}</option>{% endfor %}
+    </select>
+    <input type="date" name="date" value="{{ date }}" class="form-input" style="width:auto" onchange="this.form.submit()">
+  </form>
+</div>
+
+{% if selected_subject %}
+<div class="card animate-in">
+  <div class="card-header">
+    <h3 class="card-title">{{ selected_subject.title }} — {{ date }}</h3>
+    <span class="pill pill-purple">{{ students|length }} студентов</span>
+  </div>
+  {% if students %}
+  <form method="post" action="{% url 'save_attendance' %}">
+    {% csrf_token %}
+    <input type="hidden" name="subject" value="{{ selected_subject.id }}">
+    <input type="hidden" name="date" value="{{ date }}">
+    <div class="table-wrapper" style="border:none">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <th>✅ Присутствовал</th>
+            <th>❌ Отсутствовал</th>
+            <th>⏰ Опоздал</th>
+            <th>📋 Уважит. причина</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for student in students %}
+        <tr>
+          <td>
+            <div class="flex items-center gap-2">
+              <div class="avatar avatar-sm">{{ student.user.get_initials }}</div>
+              <span class="td-main">{{ student.user.get_full_name_or_username }}</span>
+            </div>
+          </td>
+          {% with cur_status=attendance_map|get_item:student.id %}
+          <td style="text-align:center"><input type="radio" name="status_{{ student.id }}" value="present" {% if cur_status == 'present' or not cur_status %}checked{% endif %} style="width:18px;height:18px;accent-color:var(--success);cursor:pointer"></td>
+          <td style="text-align:center"><input type="radio" name="status_{{ student.id }}" value="absent"  {% if cur_status == 'absent' %}checked{% endif %}  style="width:18px;height:18px;accent-color:var(--danger);cursor:pointer"></td>
+          <td style="text-align:center"><input type="radio" name="status_{{ student.id }}" value="late"    {% if cur_status == 'late' %}checked{% endif %}    style="width:18px;height:18px;accent-color:var(--warning);cursor:pointer"></td>
+          <td style="text-align:center"><input type="radio" name="status_{{ student.id }}" value="excused" {% if cur_status == 'excused' %}checked{% endif %} style="width:18px;height:18px;accent-color:var(--info);cursor:pointer"></td>
+          {% endwith %}
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--glass-border)">
+      <button type="submit" class="btn btn-primary">Сохранить посещаемость</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="empty-state"><h3>Студентов в этом предмете нет</h3></div>
+  {% endif %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <h3>Выберите предмет</h3>
+    <p>Для учёта посещаемости выберите предмет и дату выше</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

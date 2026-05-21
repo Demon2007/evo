@@ -1,0 +1,73 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% block title %}Аналитика{% endblock %}
+{% block page_title %}Аналитика{% endblock %}
+{% block page_breadcrumb %}Администратор / Аналитика{% endblock %}
+{% block sidebar_nav %}{% include 'admin_panel/_sidebar.html' %}{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/charts.js' %}"></script>
+<script id="grade-dist-data" type="application/json">{{ grade_dist }}</script>
+<script id="att-stats-data" type="application/json">{{ att_stats }}</script>
+<script id="groups-avg-data" type="application/json">{{ groups_avg }}</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Аналитика</h1><p>Статистика успеваемости и посещаемости</p></div>
+</div>
+
+<div class="grid-2" style="margin-bottom:28px">
+  <div class="card animate-in">
+    <div class="card-header"><h3 class="card-title">Распределение оценок</h3></div>
+    <div class="card-body">
+      <canvas id="grade-dist-chart" style="width:100%;height:220px"></canvas>
+    </div>
+  </div>
+  <div class="card animate-in delay-1">
+    <div class="card-header"><h3 class="card-title">Посещаемость</h3></div>
+    <div class="card-body">
+      <canvas id="att-chart" style="width:100%;height:220px"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="card animate-in" style="margin-bottom:28px">
+  <div class="card-header"><h3 class="card-title">Средний балл по группам</h3></div>
+  <div class="card-body">
+    <canvas id="groups-avg-chart" style="width:100%;height:220px"></canvas>
+  </div>
+</div>
+
+<div class="card animate-in">
+  <div class="card-header"><h3 class="card-title">Топ студентов по успеваемости</h3></div>
+  {% if top_students %}
+  <div class="table-wrapper" style="border:none">
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Студент</th><th>Группа</th><th>Средний балл</th></tr></thead>
+      <tbody>
+      {% for student in top_students %}
+      <tr>
+        <td class="text-muted font-bold">{{ forloop.counter }}</td>
+        <td>
+          <div class="flex items-center gap-2">
+            <div class="avatar avatar-sm">{{ student.user.get_initials }}</div>
+            <span class="td-main">{{ student.user.get_full_name_or_username }}</span>
+          </div>
+        </td>
+        <td>{% if student.group %}<span class="pill pill-purple">{{ student.group.name }}</span>{% else %}—{% endif %}</td>
+        <td>
+          <span class="{% if student.avg >= 4.5 %}pill pill-green{% elif student.avg >= 3.5 %}pill pill-blue{% else %}pill pill-yellow{% endif %}">
+            {{ student.avg|floatformat:2 }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><h3>Данных пока нет</h3></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% block title %}Дашборд{% endblock %}
+{% block page_title %}Дашборд{% endblock %}
+{% block page_breadcrumb %}Студент / Главная{% endblock %}
+{% block sidebar_nav %}{% include 'student/_sidebar.html' %}{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/charts.js' %}"></script>
+<script id="subject-grades-data" type="application/json">{{ grade_by_subject }}</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Добро пожаловать, {{ user.get_full_name_or_username }}!</h1>
+    <p>{% if student.group %}Группа: {{ student.group.name }}{% else %}Группа не назначена{% endif %}</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card animate-in">
+    <div class="stat-icon purple">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ avg_grade }}</div>
+      <div class="stat-label">Средний балл</div>
+    </div>
+  </div>
+  <div class="stat-card animate-in delay-1">
+    <div class="stat-icon green">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ att_percent }}%</div>
+      <div class="stat-label">Посещаемость</div>
+    </div>
+  </div>
+  <div class="stat-card animate-in delay-2">
+    <div class="stat-icon blue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value" data-count="{{ upcoming_hw|length }}">{{ upcoming_hw|length }}</div>
+      <div class="stat-label">Активных заданий</div>
+    </div>
+  </div>
+  <div class="stat-card animate-in delay-3">
+    <div class="stat-icon orange">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value" data-count="{{ unread_count }}">{{ unread_count }}</div>
+      <div class="stat-label">Уведомлений</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:28px">
+  <!-- Subject Grades Chart -->
+  <div class="card animate-in">
+    <div class="card-header">
+      <h3 class="card-title">Успеваемость по предметам</h3>
+      <a href="{% url 'student_grades' %}" class="btn btn-secondary btn-sm">Все оценки</a>
+    </div>
+    <div class="card-body">
+      <canvas id="subject-grades-chart" style="width:100%;height:200px"></canvas>
+    </div>
+  </div>
+
+  <!-- Today Schedule -->
+  <div class="card animate-in delay-1">
+    <div class="card-header">
+      <h3 class="card-title">Сегодняшние занятия</h3>
+      <a href="{% url 'student_schedule' %}" class="btn btn-secondary btn-sm">Расписание</a>
+    </div>
+    <div class="card-body">
+      {% if today_schedule %}
+        {% for entry in today_schedule %}
+        <div class="schedule-item">
+          <div class="schedule-time">{{ entry.time_start|time:"H:i" }} — {{ entry.time_end|time:"H:i" }}</div>
+          <div style="flex:1">
+            <div class="schedule-subject">{{ entry.subject.title }}</div>
+            <div class="schedule-meta">{{ entry.teacher.user.get_full_name_or_username|default:"—" }}</div>
+          </div>
+          {% if entry.room %}<div class="schedule-room">{{ entry.room }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state" style="padding:30px"><h3>Сегодня занятий нет</h3></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Recent Grades -->
+  <div class="card animate-in">
+    <div class="card-header">
+      <h3 class="card-title">Последние оценки</h3>
+    </div>
+    {% if recent_grades %}
+    <div class="table-wrapper" style="border:none">
+      <table class="data-table">
+        <thead><tr><th>Предмет</th><th>Оценка</th><th>Преподаватель</th><th>Дата</th></tr></thead>
+        <tbody>
+        {% for grade in recent_grades %}
+        <tr>
+          <td class="td-main">{{ grade.subject.title }}</td>
+          <td><span class="grade-pill grade-{{ grade.value }}">{{ grade.value }}</span></td>
+          <td class="text-muted text-sm">{{ grade.teacher.user.get_full_name_or_username|default:"—" }}</td>
+          <td class="text-xs text-muted">{{ grade.date|date:"d.m" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:30px"><h3>Оценок пока нет</h3></div>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming Homework -->
+  <div class="card animate-in delay-1">
+    <div class="card-header">
+      <h3 class="card-title">Ближайшие задания</h3>
+      <a href="{% url 'student_homework' %}" class="btn btn-secondary btn-sm">Все задания</a>
+    </div>
+    {% if upcoming_hw %}
+    <div style="padding:8px 0">
+      {% for hw in upcoming_hw %}
+      <div class="notification-item">
+        <div class="notif-icon homework">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="notif-content">
+          <div class="notif-title">{{ hw.title }}</div>
+          <div class="notif-message">{{ hw.subject.title }}</div>
+          <div class="notif-time">Дедлайн: {{ hw.deadline|date:"d.m.Y H:i" }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:30px"><h3>Заданий нет</h3></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

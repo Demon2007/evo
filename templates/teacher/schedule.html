@@ -1,0 +1,36 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Расписание{% endblock %}
+{% block page_title %}Расписание{% endblock %}
+{% block page_breadcrumb %}Преподаватель / Расписание{% endblock %}
+{% block sidebar_nav %}{% include 'teacher/_sidebar.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Моё расписание</h1><p>Расписание занятий</p></div>
+</div>
+
+{% if schedule_by_day %}
+  {% for day, entries in schedule_by_day.items %}
+  <div class="schedule-day animate-in">
+    <div class="schedule-day-title">{{ day }}</div>
+    {% for entry in entries %}
+    <div class="schedule-item">
+      <div class="schedule-time">{{ entry.time_start|time:"H:i" }} — {{ entry.time_end|time:"H:i" }}</div>
+      <div style="flex:1">
+        <div class="schedule-subject">{{ entry.subject.title }}</div>
+        <div class="schedule-meta">Группа: {{ entry.group.name }}</div>
+      </div>
+      {% if entry.room %}<div class="schedule-room">{{ entry.room }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <h3>Расписание не составлено</h3>
+    <p>Обратитесь к администратору для добавления расписания</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

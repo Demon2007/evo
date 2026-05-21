@@ -1,0 +1,41 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Мои предметы{% endblock %}
+{% block page_title %}Мои предметы{% endblock %}
+{% block page_breadcrumb %}Преподаватель / Предметы{% endblock %}
+{% block sidebar_nav %}{% include 'teacher/_sidebar.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Мои предметы</h1><p>Всего: {{ subjects|length }}</p></div>
+</div>
+
+{% if subjects %}
+<div class="stats-grid">
+  {% for subject in subjects %}
+  <div class="card animate-in" style="padding:24px">
+    <div style="margin-bottom:16px">
+      <h3 style="font-size:1rem;margin-bottom:8px">{{ subject.title }}</h3>
+      {% if subject.description %}<p style="font-size:0.8rem">{{ subject.description }}</p>{% endif %}
+    </div>
+    <div class="flex gap-3" style="margin-bottom:16px;flex-wrap:wrap">
+      {% for group in subject.groups.all %}
+        <span class="pill pill-purple">{{ group.name }}</span>
+      {% empty %}<span class="text-muted text-xs">Групп нет</span>{% endfor %}
+    </div>
+    <div class="flex gap-3">
+      <a href="{% url 'teacher_grades' %}?subject={{ subject.id }}" class="btn btn-secondary btn-sm">Оценки</a>
+      <a href="{% url 'teacher_attendance' %}?subject={{ subject.id }}" class="btn btn-secondary btn-sm">Посещаемость</a>
+      <a href="{% url 'teacher_homework' %}?subject={{ subject.id }}" class="btn btn-secondary btn-sm">Задания</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <h3>Предметы не назначены</h3>
+    <p>Обратитесь к администратору для назначения предметов</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

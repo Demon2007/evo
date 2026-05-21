@@ -1,0 +1,81 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Группы{% endblock %}
+{% block page_title %}Группы{% endblock %}
+{% block page_breadcrumb %}Администратор / Группы{% endblock %}
+{% block sidebar_nav %}{% include 'admin_panel/_sidebar.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Учебные группы</h1><p>Всего: {{ groups|length }}</p></div>
+  <button class="btn btn-primary" onclick="openModal('add-group-modal')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Добавить группу
+  </button>
+</div>
+
+<div class="stats-grid">
+  {% for group in groups %}
+  <div class="card animate-in" style="padding:24px">
+    <div class="flex justify-between items-center" style="margin-bottom:16px">
+      <div>
+        <h3 style="font-size:1.1rem;margin-bottom:4px">{{ group.name }}</h3>
+        <span class="pill pill-purple">{{ group.course }} курс</span>
+      </div>
+      <div class="flex gap-2">
+        <form method="post" action="{% url 'delete_group' group.pk %}" style="display:inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm btn-icon" data-confirm="Удалить группу {{ group.name }}?">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="flex gap-4">
+      <div>
+        <div class="stat-value" style="font-size:1.5rem">{{ group.student_count }}</div>
+        <div class="stat-label">Студентов</div>
+      </div>
+      <div>
+        <div class="stat-value" style="font-size:1.5rem">{{ group.subjects.count }}</div>
+        <div class="stat-label">Предметов</div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card" style="grid-column:1/-1">
+    <div class="empty-state"><h3>Групп пока нет</h3></div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="modal-overlay" id="add-group-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Добавить группу</h3>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <form method="post" action="{% url 'add_group' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Название группы *</label>
+          <input type="text" name="name" class="form-input" placeholder="ИТ-21, БЭК-11..." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Курс *</label>
+          <select name="course" class="form-input">
+            <option value="1">1 курс</option>
+            <option value="2">2 курс</option>
+            <option value="3">3 курс</option>
+            <option value="4">4 курс</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal>Отмена</button>
+        <button type="submit" class="btn btn-primary">Создать</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

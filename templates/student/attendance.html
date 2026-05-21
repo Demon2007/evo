@@ -1,0 +1,86 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Посещаемость{% endblock %}
+{% block page_title %}Посещаемость{% endblock %}
+{% block page_breadcrumb %}Студент / Посещаемость{% endblock %}
+{% block sidebar_nav %}{% include 'student/_sidebar.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Моя посещаемость</h1><p>Общая: {{ percent }}%</p></div>
+</div>
+
+<div class="stats-grid" style="margin-bottom:24px">
+  <div class="stat-card animate-in">
+    <div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+    <div class="stat-info"><div class="stat-value" data-count="{{ total }}">{{ total }}</div><div class="stat-label">Всего занятий</div></div>
+  </div>
+  <div class="stat-card animate-in delay-1">
+    <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+    <div class="stat-info"><div class="stat-value" data-count="{{ present }}">{{ present }}</div><div class="stat-label">Присутствовал</div></div>
+  </div>
+  <div class="stat-card animate-in delay-2">
+    <div class="stat-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+    <div class="stat-info"><div class="stat-value">{{ percent }}%</div><div class="stat-label">Процент посещаемости</div></div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="card animate-in" style="margin-bottom:24px">
+  <div class="card-body">
+    <div class="flex justify-between" style="margin-bottom:8px">
+      <span class="text-sm font-bold">Посещаемость</span>
+      <span class="text-sm font-bold" style="color:var(--purple-400)">{{ percent }}%</span>
+    </div>
+    <div class="progress">
+      <div class="progress-bar {% if percent >= 75 %}green{% elif percent >= 50 %}{% else %}red{% endif %}" style="width:{{ percent }}%"></div>
+    </div>
+    <div class="text-xs text-muted" style="margin-top:6px">Минимальный порог: 75%</div>
+  </div>
+</div>
+
+<div class="filters-bar">
+  <form method="get" style="display:contents">
+    <select name="subject" class="form-input" style="width:auto;min-width:160px" onchange="this.form.submit()">
+      <option value="">Все предметы</option>
+      {% for s in subjects %}<option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>{{ s.title }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="card animate-in">
+  {% if page_obj %}
+  <div class="table-wrapper" style="border:none">
+    <table class="data-table">
+      <thead><tr><th>Предмет</th><th>Статус</th><th>Примечание</th><th>Дата</th></tr></thead>
+      <tbody>
+      {% for att in page_obj %}
+      <tr>
+        <td class="td-main">{{ att.subject.title }}</td>
+        <td>
+          {% if att.status == 'present' %}<span class="pill pill-green">Присутствовал</span>
+          {% elif att.status == 'absent' %}<span class="pill pill-red">Отсутствовал</span>
+          {% elif att.status == 'late' %}<span class="pill pill-yellow">Опоздал</span>
+          {% else %}<span class="pill pill-blue">Уважит. причина</span>{% endif %}
+        </td>
+        <td class="text-sm text-muted">{{ att.note|default:"—" }}</td>
+        <td class="text-xs text-muted">{{ att.date|date:"d.m.Y" }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&subject={{ selected_subject }}" class="page-btn">‹</a>{% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}<span class="page-btn active">{{ num }}</span>
+      {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}<a href="?page={{ num }}&subject={{ selected_subject }}" class="page-btn">{{ num }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&subject={{ selected_subject }}" class="page-btn">›</a>{% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty-state"><h3>Данных о посещаемости нет</h3></div>
+  {% endif %}
+</div>
+{% endblock %}

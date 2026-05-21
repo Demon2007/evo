@@ -1,0 +1,98 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Предметы{% endblock %}
+{% block page_title %}Предметы{% endblock %}
+{% block page_breadcrumb %}Администратор / Предметы{% endblock %}
+{% block sidebar_nav %}{% include 'admin_panel/_sidebar.html' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>Предметы</h1><p>Всего: {{ page_obj.paginator.count }}</p></div>
+  <button class="btn btn-primary" onclick="openModal('add-subject-modal')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Добавить предмет
+  </button>
+</div>
+
+<div class="filters-bar">
+  <form method="get" style="display:contents">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" name="q" value="{{ q }}" placeholder="Поиск предметов...">
+    </div>
+    <button type="submit" class="btn btn-secondary">Найти</button>
+  </form>
+</div>
+
+<div class="card animate-in">
+  {% if page_obj %}
+  <div class="table-wrapper" style="border:none">
+    <table class="data-table">
+      <thead><tr><th>Предмет</th><th>Преподаватель</th><th>Группы</th><th>Оценок</th><th>Действия</th></tr></thead>
+      <tbody>
+      {% for subject in page_obj %}
+      <tr>
+        <td class="td-main">{{ subject.title }}</td>
+        <td>{{ subject.teacher.user.get_full_name_or_username|default:"—" }}</td>
+        <td>
+          {% for group in subject.groups.all %}
+          <span class="pill pill-purple" style="margin:1px">{{ group.name }}</span>
+          {% empty %}—{% endfor %}
+        </td>
+        <td><span class="pill pill-blue">{{ subject.grades.count }}</span></td>
+        <td>
+          <form method="post" action="{% url 'delete_subject' subject.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm btn-icon" data-confirm="Удалить предмет «{{ subject.title }}»?">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><h3>Предметы не найдены</h3></div>
+  {% endif %}
+</div>
+
+<div class="modal-overlay" id="add-subject-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Добавить предмет</h3>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <form method="post" action="{% url 'add_subject' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Название *</label>
+          <input type="text" name="title" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Преподаватель</label>
+          <select name="teacher" class="form-input">
+            <option value="">— Выберите преподавателя —</option>
+            {% for t in teachers %}<option value="{{ t.id }}">{{ t.user.get_full_name_or_username }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Группы (можно несколько)</label>
+          <select name="groups" class="form-input" multiple style="height:100px">
+            {% for g in groups %}<option value="{{ g.id }}">{{ g }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Описание</label>
+          <textarea name="description" class="form-input" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal>Отмена</button>
+        <button type="submit" class="btn btn-primary">Добавить</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
