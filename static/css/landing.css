@@ -423,7 +423,7 @@
 
 .land-footer-links a:hover { color: #0f172a; }
 
-/* Responsive */
+/* ─── Landing Responsive ─── */
 @media (max-width: 1024px) {
   .features-grid       { grid-template-columns: repeat(2, 1fr); }
   .roles-grid          { grid-template-columns: repeat(2, 1fr); }
@@ -431,8 +431,49 @@
 }
 
 @media (max-width: 768px) {
-  .features-grid { grid-template-columns: 1fr; }
-  .roles-grid    { grid-template-columns: 1fr; }
-  .land-nav-links .land-nav-link { display: none; }
+  /* Nav */
+  .land-nav-links .land-nav-link:not(.land-nav-cta) { display: none; }
+  .land-nav-inner { padding: 0 16px; }
+
+  /* Hero */
+  .hero { padding: 90px 16px 60px; }
+  .hero-title { font-size: clamp(1.9rem, 8vw, 3rem); }
+  .hero-description { font-size: 1rem; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-btn-primary,
+  .hero-btn-secondary { justify-content: center; }
+
+  /* Stats */
+  .stats-section { padding: 40px 16px; }
+  .stats-section-inner { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+  /* Features & Roles */
+  .features-section,
+  .roles-section { padding: 56px 16px; }
+  .features-grid { grid-template-columns: 1fr; gap: 14px; }
+  .roles-grid    { grid-template-columns: 1fr; gap: 16px; }
+
+  /* Footer */
   .land-footer-inner { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .hero { padding: 80px 14px 50px; }
+  .hero-title { font-size: clamp(1.7rem, 9vw, 2.4rem); }
+  .hero-badge { font-size: .72rem; padding: 5px 12px; }
+  .hero-btn-primary,
+  .hero-btn-secondary { padding: 12px 24px; font-size: .9rem; }
+
+  .stat-item { padding: 20px 14px; }
+  .stat-item-num { font-size: 1.8rem; }
+
+  .section-title { font-size: clamp(1.4rem, 6vw, 2rem); }
+  .feature-card  { padding: 20px; }
+  .role-showcase { padding: 24px 18px; }
+}
+
+@media (max-width: 375px) {
+  .stats-section-inner { grid-template-columns: 1fr; }
+  .hero-title { font-size: 1.65rem; }
+  .land-nav-cta { padding: 7px 14px; font-size: .82rem; }
 }

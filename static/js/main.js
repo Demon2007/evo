@@ -28,16 +28,29 @@ function initSidebar() {
 
   const isMobile = () => window.innerWidth < 768;
 
-  const savedState = localStorage.getItem('sidebar-collapsed');
-  if (savedState === 'true' && !isMobile()) {
+  // Restore desktop collapsed state
+  if (localStorage.getItem('sidebar-collapsed') === 'true' && !isMobile()) {
     sidebar.classList.add('collapsed');
     mainContent && mainContent.classList.add('expanded');
   }
 
+  function openMobile() {
+    sidebar.classList.add('mobile-open');
+    overlay && overlay.classList.add('active');
+    toggle && toggle.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobile() {
+    sidebar.classList.remove('mobile-open');
+    overlay && overlay.classList.remove('active');
+    toggle && toggle.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
   toggle && toggle.addEventListener('click', () => {
     if (isMobile()) {
-      sidebar.classList.toggle('mobile-open');
-      overlay && overlay.classList.toggle('active');
+      sidebar.classList.contains('mobile-open') ? closeMobile() : openMobile();
     } else {
       const collapsed = sidebar.classList.toggle('collapsed');
       mainContent && mainContent.classList.toggle('expanded', collapsed);
@@ -45,17 +58,18 @@ function initSidebar() {
     }
   });
 
-  overlay && overlay.addEventListener('click', () => {
-    sidebar.classList.remove('mobile-open');
-    overlay.classList.remove('active');
+  // Close sidebar on nav link click (mobile)
+  sidebar.querySelectorAll('.nav-item').forEach(link => {
+    link.addEventListener('click', () => {
+      if (isMobile()) closeMobile();
+    });
   });
 
+  overlay && overlay.addEventListener('click', closeMobile);
+
   window.addEventListener('resize', () => {
-    if (!isMobile()) {
-      sidebar.classList.remove('mobile-open');
-      overlay && overlay.classList.remove('active');
-    }
-  });
+    if (!isMobile()) closeMobile();
+  }, { passive: true });
 }
 
 // ── Modals ───────────────────────────────────────────
