@@ -14,62 +14,90 @@
 <div class="page-header">
   <div class="page-header-left">
     <h1>Мои оценки</h1>
-    <p>Средний балл: <strong style="color:var(--purple-400)">{{ avg }}</strong></p>
+    <p>Средний балл по всем предметам: <strong>{{ avg }}</strong></p>
   </div>
 </div>
 
-<!-- Avg by subject chart -->
-<div class="card animate-in" style="margin-bottom:24px">
-  <div class="card-header"><h3 class="card-title">Средний балл по предметам</h3></div>
-  <div class="card-body">
-    <canvas id="subject-grades-chart" style="width:100%;height:200px"></canvas>
+<!-- Chart -->
+{% if grade_by_subject != '{}' %}
+<div class="card animate-in" style="margin-bottom:20px">
+  <div class="card-header"><h3 class="card-title">Успеваемость по предметам</h3></div>
+  <div class="card-body" style="padding:16px">
+    <canvas id="subject-grades-chart" style="width:100%;height:180px"></canvas>
   </div>
 </div>
+{% endif %}
 
-<div class="filters-bar">
-  <form method="get" style="display:contents">
-    <select name="subject" class="form-input" style="width:auto;min-width:160px" onchange="this.form.submit()">
-      <option value="">Все предметы</option>
-      {% for s in subjects %}<option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>{{ s.title }}</option>{% endfor %}
-    </select>
-  </form>
-</div>
+<!-- Grades grouped by subject -->
+{% if grades_by_subject %}
+  {% for item in grades_by_subject %}
+  <div class="card animate-in" style="margin-bottom:16px">
 
-<div class="card animate-in">
-  {% if page_obj %}
-  <div class="table-wrapper" style="border:none">
-    <table class="data-table">
-      <thead><tr><th>Предмет</th><th>Оценка</th><th>Характеристика</th><th>Комментарий</th><th>Преподаватель</th><th>Дата</th></tr></thead>
-      <tbody>
-      {% for grade in page_obj %}
-      <tr>
-        <td class="td-main">{{ grade.subject.title }}</td>
-        <td><span class="grade-pill grade-{{ grade.value }}">{{ grade.value }}</span></td>
-        <td>
-          <span class="pill {% if grade.value == 5 %}pill-green{% elif grade.value == 4 %}pill-blue{% elif grade.value == 3 %}pill-yellow{% else %}pill-red{% endif %}">
-            {{ grade.get_grade_label }}
+    <!-- Subject header -->
+    <div class="card-header" style="gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.95rem;font-weight:700;color:var(--t1)">{{ item.subject.title }}</div>
+        <div style="font-size:.75rem;color:var(--t4);margin-top:2px">
+          Преподаватель:
+          <strong style="color:var(--t2)">
+            {{ item.teacher.user.get_full_name_or_username|default:"Не указан" }}
+          </strong>
+        </div>
+      </div>
+      <!-- Average badge -->
+      <div style="text-align:center;flex-shrink:0">
+        <div style="font-size:1.4rem;font-weight:900;color:var(--t1);line-height:1">{{ item.avg }}</div>
+        <div style="font-size:.65rem;color:var(--t4);text-transform:uppercase;letter-spacing:.05em">Средний</div>
+      </div>
+    </div>
+
+    <!-- Grades row -->
+    <div class="card-body" style="padding:14px 18px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        {% for grade in item.grades %}
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+          <span class="grade-pill grade-{{ grade.value }}" style="width:32px;height:32px;font-size:.95rem">
+            {{ grade.value }}
           </span>
-        </td>
-        <td class="text-sm text-muted">{{ grade.comment|default:"—" }}</td>
-        <td class="text-sm">{{ grade.teacher.user.get_full_name_or_username|default:"—" }}</td>
-        <td class="text-xs text-muted">{{ grade.date|date:"d.m.Y" }}</td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+          <span style="font-size:.62rem;color:var(--t4)">{{ grade.date|date:"d.m" }}</span>
+        </div>
+        {% endfor %}
+
+        {% if item.grades|length == 0 %}
+        <span style="font-size:.82rem;color:var(--t4)">Оценок пока нет</span>
+        {% endif %}
+      </div>
+
+      <!-- Grade description legend for latest grade -->
+      {% with last=item.grades.0 %}
+      {% if last %}
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">
+        <span class="pill {% if last.value == 5 %}pill-green{% elif last.value == 4 %}pill-blue{% elif last.value == 3 %}pill-yellow{% else %}pill-red{% endif %}">
+          {{ last.get_grade_label }}
+        </span>
+        <span style="font-size:.75rem;color:var(--t4)">последняя оценка</span>
+        {% if last.comment %}
+        <span style="font-size:.75rem;color:var(--t3)">— {{ last.comment }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% endwith %}
+    </div>
+
   </div>
-  {% if page_obj.has_other_pages %}
-  <div class="pagination">
-    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&subject={{ selected_subject }}" class="page-btn">‹</a>{% endif %}
-    {% for num in page_obj.paginator.page_range %}
-      {% if page_obj.number == num %}<span class="page-btn active">{{ num }}</span>
-      {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}<a href="?page={{ num }}&subject={{ selected_subject }}" class="page-btn">{{ num }}</a>{% endif %}
-    {% endfor %}
-    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&subject={{ selected_subject }}" class="page-btn">›</a>{% endif %}
+  {% endfor %}
+
+{% else %}
+<div class="card">
+  <div class="empty-state" style="padding:60px 20px">
+    <div class="empty-state-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    </div>
+    <h3>Оценок пока нет</h3>
+    <p>Здесь будут отображаться ваши оценки по всем предметам</p>
   </div>
-  {% endif %}
-  {% else %}
-  <div class="empty-state"><h3>Оценок пока нет</h3></div>
-  {% endif %}
 </div>
+{% endif %}
 {% endblock %}

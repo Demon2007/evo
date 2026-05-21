@@ -242,7 +242,7 @@ const MARK_URL = "{% url 'teacher_group_mark' %}";
 let currentSubjId = null;
 let currentMode   = 'grade';
 
-// Grade storage per student: { studentId: [{id, value}, ...] }
+// Grade storage per subject+student: { subjId: { studentId: [{id, value}] } }
 const givenGrades = {};
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -257,6 +257,11 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       currentSubjId = tab.dataset.subjId;
       document.getElementById('subj-label').textContent = tab.dataset.subjName;
+      // Re-render given grades for new subject
+      document.querySelectorAll('[data-student-id]').forEach(row => {
+        const sid = parseInt(row.dataset.studentId);
+        renderGivenGrades(sid);
+      });
     });
   });
   setMode('grade');
@@ -275,10 +280,14 @@ function setMode(mode) {
     el.style.display = mode === 'attendance' ? 'flex' : 'none');
 }
 
+function subjectGrades(studentId) {
+  return (givenGrades[currentSubjId] || {})[studentId] || [];
+}
+
 function renderGivenGrades(studentId) {
   const el = document.getElementById(`given-${studentId}`);
   if (!el) return;
-  const grades = givenGrades[studentId] || [];
+  const grades = subjectGrades(studentId);
   el.innerHTML = grades.map(g =>
     `<span class="given-grade gg-${g.value}"
            onclick="removeGrade(${g.id}, ${studentId}, this)"
@@ -297,8 +306,9 @@ async function markGrade(studentId, value, btn) {
   btn.classList.remove('flash');
   const data = await resp.json();
   if (data.success) {
-    if (!givenGrades[studentId]) givenGrades[studentId] = [];
-    givenGrades[studentId].push({id: data.grade_id, value});
+    if (!givenGrades[currentSubjId]) givenGrades[currentSubjId] = {};
+    if (!givenGrades[currentSubjId][studentId]) givenGrades[currentSubjId][studentId] = [];
+    givenGrades[currentSubjId][studentId].push({id: data.grade_id, value});
     renderGivenGrades(studentId);
     const avgEl = document.getElementById(`avg-${studentId}`);
     if (avgEl) avgEl.textContent = data.avg;
@@ -317,8 +327,8 @@ async function removeGrade(gradeId, studentId, el) {
   });
   const data = await resp.json();
   if (data.success) {
-    if (givenGrades[studentId])
-      givenGrades[studentId] = givenGrades[studentId].filter(g => g.id !== gradeId);
+    if (givenGrades[currentSubjId]?.[studentId])
+      givenGrades[currentSubjId][studentId] = givenGrades[currentSubjId][studentId].filter(g => g.id !== gradeId);
     renderGivenGrades(studentId);
     const avgEl = document.getElementById(`avg-${studentId}`);
     if (avgEl) avgEl.textContent = data.avg;

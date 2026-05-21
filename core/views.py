@@ -788,29 +788,44 @@ def student_dashboard(request):
 @role_required('student')
 def student_grades(request):
     student = get_student_profile(request.user)
-    subject_id = request.GET.get('subject', '')
-    grades = Grade.objects.filter(student=student).select_related(
+    all_grades = Grade.objects.filter(student=student).select_related(
         'subject', 'teacher__user'
-    ).order_by('-date')
+    ).order_by('subject__title', '-date')
+
     subjects = []
     if student.group:
-        subjects = student.group.subjects.all()
-    if subject_id:
-        grades = grades.filter(subject_id=subject_id)
-    avg = grades.aggregate(avg=Avg('value'))['avg'] or 0
-    grade_by_subject = {}
-    for subj in subjects:
-        subj_grades = Grade.objects.filter(student=student, subject=subj)
-        if subj_grades.exists():
-            grade_by_subject[subj.title] = round(
-                subj_grades.aggregate(avg=Avg('value'))['avg'] or 0, 1
-            )
-    paginator = Paginator(grades, 20)
-    page = paginator.get_page(request.GET.get('page'))
+        subjects = list(student.group.subjects.select_related('teacher__user').all())
+
+    # Group grades by subject for the new view
+    grades_by_subject = {}
+    for g in all_grades:
+        sid = g.subject_id
+        if sid not in grades_by_subject:
+            grades_by_subject[sid] = {
+                'subject': g.subject,
+                'teacher': g.teacher,
+                'grades': [],
+            }
+        grades_by_subject[sid]['grades'].append(g)
+
+    for sid, data in grades_by_subject.items():
+        vals = [g.value for g in data['grades']]
+        data['avg'] = round(sum(vals) / len(vals), 1) if vals else 0
+
+    overall_avg = all_grades.aggregate(avg=Avg('value'))['avg'] or 0
+
+    grade_by_subject = {
+        sid_data['subject'].title: sid_data['avg']
+        for sid_data in grades_by_subject.values()
+        if sid_data['avg'] > 0
+    }
+
     return render(request, 'student/grades.html', {
-        'page_obj': page, 'subjects': subjects,
-        'selected_subject': subject_id, 'avg': round(avg, 2),
-        'grade_by_subject': json.dumps(grade_by_subject), 'student': student
+        'grades_by_subject': grades_by_subject.values(),
+        'subjects': subjects,
+        'avg': round(overall_avg, 2),
+        'grade_by_subject': json.dumps(grade_by_subject),
+        'student': student,
     })
 
 

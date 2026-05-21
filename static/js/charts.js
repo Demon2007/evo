@@ -122,11 +122,11 @@ function drawDonutChart(canvasId, labels, values, colors) {
   // Inner circle (hole)
   ctx.beginPath();
   ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-  ctx.fillStyle = '#0f0f1e';
+  ctx.fillStyle = '#ffffff';
   ctx.fill();
 
   // Center label
-  ctx.fillStyle = '#f1f0ff';
+  ctx.fillStyle = '#0f172a';
   ctx.font = 'bold 20px Inter, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(total, cx, cy + 7);
@@ -145,7 +145,7 @@ function drawDonutChart(canvasId, labels, values, colors) {
     ctx.roundRect ? ctx.roundRect(legendX, legendY - 7, 10, 10, 2) : ctx.rect(legendX, legendY - 7, 10, 10);
     ctx.fill();
 
-    ctx.fillStyle = '#f1f0ff';
+    ctx.fillStyle = '#334155';
     ctx.font = '12px Inter, sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`${label} (${values[i]})`, legendX + 16, legendY + 3);
@@ -237,70 +237,56 @@ function drawLineChart(canvasId, labels, datasets, options = {}) {
 
 // ── Init charts from data attributes ─────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Grade distribution bar chart
+  initAllCharts();
+
+  // Responsive redraw on resize (no page reload)
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(initAllCharts, 250);
+  }, { passive: true });
+});
+
+function initAllCharts() {
   const gradeEl = document.getElementById('grade-dist-data');
   if (gradeEl) {
     try {
       const data = JSON.parse(gradeEl.textContent);
-      const labels = ['1', '2', '3', '4', '5'];
-      const values = labels.map(l => data[l] || 0);
-      const colors = labels.map(l => GRADE_COLORS[l]);
-      drawBarChart('grade-dist-chart', labels, values, { colors });
+      const labels = ['1','2','3','4','5'];
+      drawBarChart('grade-dist-chart', labels, labels.map(l=>data[l]||0), {colors:labels.map(l=>GRADE_COLORS[l])});
     } catch(e) {}
   }
-
-  // Attendance donut
   const attEl = document.getElementById('att-stats-data');
   if (attEl) {
     try {
       const data = JSON.parse(attEl.textContent);
-      const labels = ['Присутствовал', 'Отсутствовал', 'Опоздал', 'Уважит.'];
-      const keys   = ['present', 'absent', 'late', 'excused'];
-      const values = keys.map(k => data[k] || 0);
-      const colors = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
-      drawDonutChart('att-chart', labels, values, colors);
+      drawDonutChart('att-chart',
+        ['Присутствовал','Не был','Заболел','Отпросился','Опоздал'],
+        ['present','absent','sick','excused','late'].map(k=>data[k]||0),
+        ['#10b981','#ef4444','#f59e0b','#3b82f6','#8b5cf6']
+      );
     } catch(e) {}
   }
-
-  // Groups bar chart
   const groupsEl = document.getElementById('groups-data');
   if (groupsEl) {
     try {
       const data = JSON.parse(groupsEl.textContent);
-      const labels = data.map(g => g.name);
-      const values = data.map(g => g.cnt);
-      drawBarChart('groups-chart', labels, values, { colors: [CHART_COLORS.purple] });
+      drawBarChart('groups-chart', data.map(g=>g.name), data.map(g=>g.cnt), {colors:['#3b82f6']});
     } catch(e) {}
   }
-
-  // Groups average
   const groupsAvgEl = document.getElementById('groups-avg-data');
   if (groupsAvgEl) {
     try {
       const data = JSON.parse(groupsAvgEl.textContent);
-      const labels = data.map(g => g.name);
-      const values = data.map(g => parseFloat(g.avg).toFixed(1));
-      drawBarChart('groups-avg-chart', labels, values.map(Number), { colors: [CHART_COLORS.purple] });
+      drawBarChart('groups-avg-chart', data.map(g=>g.name), data.map(g=>+parseFloat(g.avg).toFixed(1)), {colors:['#10b981']});
     } catch(e) {}
   }
-
-  // Subject avg grades (student)
   const subjEl = document.getElementById('subject-grades-data');
   if (subjEl) {
     try {
       const data = JSON.parse(subjEl.textContent);
       const labels = Object.keys(data);
-      const values = Object.values(data).map(Number);
-      if (labels.length > 0) {
-        drawBarChart('subject-grades-chart', labels, values, { colors: [CHART_COLORS.blue] });
-      }
+      if (labels.length) drawBarChart('subject-grades-chart', labels, Object.values(data).map(Number), {colors:['#3b82f6']});
     } catch(e) {}
   }
-
-  // Responsive redraw on resize
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => location.reload(), 400);
-  });
-});
+}
